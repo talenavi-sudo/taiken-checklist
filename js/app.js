@@ -520,5 +520,60 @@ const App = {
   },
 };
 
+// ---- ログイン処理 ----
+const Auth = {
+  init() {
+    // 既にログイン済みならアプリを表示
+    if (sessionStorage.getItem('authenticated') === 'true') {
+      this.showApp();
+      return;
+    }
+
+    // ログインボタン
+    document.getElementById('login-btn').addEventListener('click', () => this.login());
+
+    // Enterキーでもログイン
+    document.getElementById('login-password').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') this.login();
+    });
+  },
+
+  async login() {
+    const password = document.getElementById('login-password').value;
+    const errorEl = document.getElementById('login-error');
+    const btn = document.getElementById('login-btn');
+
+    btn.textContent = '確認中...';
+    errorEl.textContent = '';
+
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        sessionStorage.setItem('authenticated', 'true');
+        this.showApp();
+      } else {
+        errorEl.textContent = data.error || 'パスワードが違います';
+        btn.textContent = 'ログイン';
+      }
+    } catch (err) {
+      errorEl.textContent = '通信エラーが発生しました';
+      btn.textContent = 'ログイン';
+    }
+  },
+
+  showApp() {
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('app').style.display = 'flex';
+    App.init();
+  },
+};
+
 // 起動
-document.addEventListener('DOMContentLoaded', () => App.init());
+document.addEventListener('DOMContentLoaded', () => Auth.init());
