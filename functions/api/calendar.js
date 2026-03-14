@@ -129,12 +129,22 @@ async function getAccessToken(clientEmail, privateKeyPem) {
 }
 
 async function importPrivateKey(pemStr) {
-  // PEMからDER形式に変換
-  const pem = pemStr
-    .replace(/\\n/g, '\n')
-    .replace(/-----BEGIN PRIVATE KEY-----/, '')
-    .replace(/-----END PRIVATE KEY-----/, '')
-    .replace(/\s/g, '');
+  // PEMからDER形式に変換（様々な入力形式に対応）
+  let pem = pemStr;
+  
+  // JSON文字列としてエスケープされた \n を実際の改行に変換
+  pem = pem.replace(/\\n/g, '\n');
+  
+  // 先頭・末尾の引用符を除去（コピペ時に含まれる場合）
+  pem = pem.replace(/^["']|["']$/g, '');
+  
+  // PEMヘッダー・フッターと空白を除去
+  pem = pem
+    .replace(/-----BEGIN PRIVATE KEY-----/g, '')
+    .replace(/-----END PRIVATE KEY-----/g, '')
+    .replace(/-----BEGIN RSA PRIVATE KEY-----/g, '')
+    .replace(/-----END RSA PRIVATE KEY-----/g, '')
+    .replace(/[\s\r\n]/g, '');
 
   const binaryStr = atob(pem);
   const bytes = new Uint8Array(binaryStr.length);
